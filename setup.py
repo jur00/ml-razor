@@ -9,7 +9,7 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="ml-razor",
-    version="0.1.2",
+    version="0.1.3",
     description="Tool for minimizing amount of features, while keeping model performance high.",
     long_description=long_description,
     long_description_content_type="text/markdown",
