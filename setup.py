@@ -30,5 +30,5 @@ setup(
     ],
     packages=["ml_razor"],
     include_package_data=True,
-    install_requires=["numpy", "pandas", "scipy", "matplotlib", "sklearn"]
+    install_requires=["numpy", "pandas", "scipy", "matplotlib", "scikit-learn"]
 )
