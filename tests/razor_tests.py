@@ -11,14 +11,11 @@ from scipy.linalg import cholesky
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-import lightgbm as lgb
 
-def create_correlated_regression_data(correlation_level, estimation, random_state):
+def create_correlated_regression_data(correlation_level, random_state):
     """
     correlation_level : str
         Possible values {'high', 'low', 'none'}.
-    estimation : str
-        Possible values {'linear_regression', 'light_gradient_boost'.
     random_state : int
         Must be > 0.
     """
@@ -50,7 +47,7 @@ def create_correlated_regression_data(correlation_level, estimation, random_stat
     fi = forest.feature_importances_
     importances = {k: v for k, v in zip(df.columns, fi)}
 
-    estimator = LinearRegression() if estimation == 'linear_regression' else lgb.LGBMRegressor(max_depth=5, n_jobs=cpu_count() - 1)
+    estimator = LinearRegression()
 
     return df, importances, estimator
 
@@ -87,7 +84,7 @@ class RazorTestCase(unittest.TestCase):
         self.razor = None
 
     def test_high_cor_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('high', 'linear_regression', self.__random_state)
+        df, importances, estimator = create_correlated_regression_data('high', self.__random_state)
 
         correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
         self._correlation_assertions(df, correlation_features)
@@ -96,7 +93,7 @@ class RazorTestCase(unittest.TestCase):
         self._importance_assertions(correlation_features, final_features)
 
     def test_low_cor_lgbm(self):
-        df, importances, estimator = create_correlated_regression_data('low', 'light_gradient_boost', self.__random_state)
+        df, importances, estimator = create_correlated_regression_data('low', self.__random_state)
 
         correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
         self._correlation_assertions(df, correlation_features)
@@ -105,7 +102,7 @@ class RazorTestCase(unittest.TestCase):
         self._importance_assertions(correlation_features, final_features)
 
     def test_no_cor_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('none', 'linear_regression', self.__random_state)
+        df, importances, estimator = create_correlated_regression_data('none', self.__random_state)
 
         with self.assertWarns(UserWarning):
             correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
