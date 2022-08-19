@@ -9,17 +9,14 @@ import pandas as pd
 from scipy.stats import random_correlation
 from scipy.linalg import cholesky
 
-import ppscore as pps
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 import lightgbm as lgb
 
-def create_correlated_regression_data(correlation_level, importance_type, estimation, random_state):
+def create_correlated_regression_data(correlation_level, estimation, random_state):
     """
     correlation_level : str
         Possible values {'high', 'low', 'none'}.
-    importance_type : str
-        Possible values {'pps', 'rf'}.
     estimation : str
         Possible values {'linear_regression', 'light_gradient_boost'.
     random_state : int
@@ -48,14 +45,10 @@ def create_correlated_regression_data(correlation_level, importance_type, estima
     df = pd.DataFrame(X, columns=['feature_{}'.format(i) for i in range(n_features - 1)])
     df['target'] = y
 
-    if importance_type == 'pps':
-        pps_results = pps.predictors(df, y='target')
-        importances = {k: v for k, v in zip(pps_results['x'], pps_results['ppscore'])}
-    else:  # importance_type == 'rf'
-        forest = RandomForestRegressor(random_state=random_state)
-        forest.fit(X, y)
-        fi = forest.feature_importances_
-        importances = {k: v for k, v in zip(df.columns, fi)}
+    forest = RandomForestRegressor(random_state=random_state)
+    forest.fit(X, y)
+    fi = forest.feature_importances_
+    importances = {k: v for k, v in zip(df.columns, fi)}
 
     estimator = LinearRegression() if estimation == 'linear_regression' else lgb.LGBMRegressor(max_depth=5, n_jobs=cpu_count() - 1)
 
@@ -93,8 +86,8 @@ class RazorTestCase(unittest.TestCase):
         self.__random_state = 12
         self.razor = None
 
-    def test_high_cor_pps_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('high', 'pps', 'linear_regression', self.__random_state)
+    def test_high_cor_linreg(self):
+        df, importances, estimator = create_correlated_regression_data('high', 'linear_regression', self.__random_state)
 
         correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
         self._correlation_assertions(df, correlation_features)
@@ -102,8 +95,8 @@ class RazorTestCase(unittest.TestCase):
         final_features = self._fit_importance(df, correlation_importances, estimator)
         self._importance_assertions(correlation_features, final_features)
 
-    def test_high_cor_rf_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('high', 'rf', 'linear_regression', self.__random_state)
+    def test_low_cor_lgbm(self):
+        df, importances, estimator = create_correlated_regression_data('low', 'light_gradient_boost', self.__random_state)
 
         correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
         self._correlation_assertions(df, correlation_features)
@@ -111,35 +104,8 @@ class RazorTestCase(unittest.TestCase):
         final_features = self._fit_importance(df, correlation_importances, estimator)
         self._importance_assertions(correlation_features, final_features)
 
-    def test_low_cor_pps_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('low', 'pps', 'linear_regression', self.__random_state)
-
-        correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
-        self._correlation_assertions(df, correlation_features)
-
-        final_features = self._fit_importance(df, correlation_importances, estimator)
-        self._importance_assertions(correlation_features, final_features)
-
-    def test_low_cor_pps_lgbm(self):
-        df, importances, estimator = create_correlated_regression_data('low', 'pps', 'light_gradient_boost', self.__random_state)
-
-        correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
-        self._correlation_assertions(df, correlation_features)
-
-        final_features = self._fit_importance(df, correlation_importances, estimator)
-        self._importance_assertions(correlation_features, final_features)
-
-    def test_low_cor_rf_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('low', 'rf', 'linear_regression', self.__random_state)
-
-        correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
-        self._correlation_assertions(df, correlation_features)
-
-        final_features = self._fit_importance(df, correlation_importances, estimator)
-        self._importance_assertions(correlation_features, final_features)
-
-    def test_no_cor_pps_linreg(self):
-        df, importances, estimator = create_correlated_regression_data('none', 'pps', 'linear_regression')
+    def test_no_cor_linreg(self):
+        df, importances, estimator = create_correlated_regression_data('none', 'linear_regression', self.__random_state)
 
         with self.assertWarns(UserWarning):
             correlation_features, correlation_importances = self._fit_correlation(df, importances, estimator)
