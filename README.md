@@ -12,6 +12,7 @@ pip install ml-razor
 
 ## Usage
 Suppose you have a dataset with too many continuous features. You have little domain knowledge, and therefore you want a data-driven approach for minimizing the amount of features while keeping model performance high.
+Also, Dimensionality Reduction algorithms are not an option, because you don't want to reduce based on only linear relationships (rule out PCA) or you have nearly 1000 features (rule out T-SNE).
 ```python
 from ml_razor import Razor
 from sklearn.datasets import load_breast_cancer
